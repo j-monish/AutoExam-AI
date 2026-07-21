@@ -232,7 +232,18 @@ export async function createMultiAgentWorkflow(
      Present the questions in a logical order, typically from easier to more difficult.
      If answers are to be included, must format them in a separate section at the end.
 
-     Your output should be a complete, ready-to-use exam paper.`
+     Your output should be a complete, ready-to-use exam paper.
+
+     STRICT OUTPUT CONSTRAINTS:
+     - Return ONLY the final formatted question paper.
+     - Do NOT generate answer-writing space, blank lines for students, or placeholder lines.
+     - Do NOT generate repeated underscores, blank lines, or decorative separators.
+     - Do NOT repeat any section or duplicate the entire paper.
+     - Do NOT duplicate the question paper before or after the answer key.
+     - Keep the output concise, approximately 3-5 printed pages.
+     - Stop immediately after the final question, or after the answer key if answers were requested.
+     - Never simulate physical answer sheets or writing space.
+     - Never generate long sequences of repeated characters such as underscores, hyphens, or dots.`
   );
 
   // Define agent nodes

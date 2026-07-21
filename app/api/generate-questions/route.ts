@@ -154,25 +154,37 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    const {
+      OPENROUTER_API_KEY: apiKey,
+      OPENROUTER_MODEL: modelName,
+    } = process.env;
+
+    if (!apiKey || !modelName) {
+      const missing = [
+        !apiKey && "OPENROUTER_API_KEY",
+        !modelName && "OPENROUTER_MODEL",
+      ].filter(Boolean);
+      return NextResponse.json(
+        { message: `Server configuration error: missing environment variable(s): ${missing.join(", ")}` },
+        { status: 500 }
+      );
+    }
+
     const url = new URL(req.url);
     const questionHeader = url.searchParams.get("questionHeader");
     const questionDescription = url.searchParams.get("questionDescription");
-    const apiKey = req.headers.get("x-api-key");
-    const modelName = url.searchParams.get("modelName") || "qwen/qwq-32b:free";
     const uploadedFilesParam = url.searchParams.get("uploadedFiles");
 
     // Validate required parameters
-    if (!questionHeader || !questionDescription || !apiKey) {
+    if (!questionHeader || !questionDescription) {
       return NextResponse.json(
         {
           message:
-            "Missing required parameters. Please provide questionHeader, questionDescription, and apiKey.",
-          required: ["questionHeader", "questionDescription", "apiKey"],
+            "Missing required parameters. Please provide questionHeader and questionDescription.",
+          required: ["questionHeader", "questionDescription"],
           received: {
             questionHeader: !!questionHeader,
             questionDescription: !!questionDescription,
-            apiKey: !!apiKey,
-            modelName: !!modelName,
           },
         },
         { status: 400 }
@@ -359,6 +371,24 @@ export async function GET(req: NextRequest) {
             cleanContent = cleanContent
               .replace(/```(json)?\n/g, "")
               .replace(/```$/g, "");
+
+            // Safety guard: reject abnormally large or runaway output
+            const underscoreRuns = (cleanContent.match(/_{10,}/g) || []).length;
+            if (cleanContent.length > 100000 || underscoreRuns > 10) {
+              console.warn(
+                `Formatter exceeded safe output limits (length: ${cleanContent.length}, underscore runs: ${underscoreRuns}). Rejecting output.`
+              );
+
+              await safelyWriteToStream(
+                `data: ${JSON.stringify({
+                  type: "error",
+                  content: "Generation failed: The AI produced an abnormally large response. Please try generating again.",
+                })}\n\n`
+              );
+              await safelyWriteToStream("event: complete\ndata: done\n\n");
+              await cleanupConvexFiles();
+              return;
+            }
 
             // Check if content is JSON (starts with { or [)
             const isJsonContent =

@@ -50,7 +50,7 @@ This multi-step process ensures high-quality, relevant questions that align with
 
 - Node.js (v18.0 or later)
 - npm or yarn package manager
-- OpenRouter API key (for accessing AI models)
+- Server-side OpenRouter configuration (`OPENROUTER_API_KEY` and `OPENROUTER_MODEL`)
 - Convex account (for file storage)
 - Modern web browser
 
@@ -79,6 +79,8 @@ This multi-step process ensures high-quality, relevant questions that align with
    NEXT_PUBLIC_OPENROUTER_SITE_URL="http://localhost:3000"
    OPENROUTER_API_BASE="https://openrouter.ai/api/v1"
    NEXT_PUBLIC_CONVEX_URL="your_convex_deployment_url"
+   OPENROUTER_API_KEY="your_openrouter_api_key"
+   OPENROUTER_MODEL="qwen/qwq-32b:free"
    ```
 
 4. **Initialize Convex**
@@ -122,15 +124,7 @@ This multi-step process ensures high-quality, relevant questions that align with
    - **Question Description**: Provide instructions and parameters for the question paper
      - Example: "Create a question paper with 5 multiple-choice questions (2 marks each), 3 short-answer questions (5 marks each), and 1 essay question (10 marks). Focus on Python basics and data structures."
 
-4. **Enter API Key**
-
-   Provide your OpenRouter API key in the designated field. This is used to access the AI models that power the question generation.
-
-5. **Select Model (Optional)**
-
-   Choose the AI model to use for generation. The default is "qwen/qwq-32b:free".
-
-6. **Generate Questions**
+4. **Generate Questions**
 
    Click the "Generate Question Paper" button to start the process. The system will:
 
@@ -140,7 +134,7 @@ This multi-step process ensures high-quality, relevant questions that align with
    - Create appropriate questions
    - Format a complete exam paper
 
-7. **View and Export Results**
+5. **View and Export Results**
 
    Once generation is complete, you can:
 
@@ -199,8 +193,6 @@ Uploads PDF files and initiates question generation.
   - `file-{index}`: PDF files
   - `questionHeader`: String - Exam header details
   - `questionDescription`: String - Question paper requirements
-  - `apiKey`: String - OpenRouter API key
-  - `modelName`: String (optional) - AI model name
 
 **Response**:
 
@@ -223,8 +215,6 @@ Generates questions based on previously uploaded files.
 - Query Parameters:
   - `questionHeader`: String - Exam header details
   - `questionDescription`: String - Question paper requirements
-  - `apiKey`: String - OpenRouter API key
-  - `modelName`: String (optional) - AI model name
   - `uploadedFiles`: String - Comma-separated list of uploaded file names
 
 **Response**:
@@ -237,10 +227,9 @@ Generates questions based on previously uploaded files.
 
 ## 🔒 Security Considerations
 
-- QuestGen-AI does not store your API keys permanently
+- API keys are stored as server-side environment variables and are never exposed to the client
 - Uploaded PDF files are securely stored in Convex and automatically deleted once question generation is complete
 - No user data is retained between sessions
-- API keys are transmitted securely but should still be protected carefully
 
 ## 🔮 Future Improvements
 

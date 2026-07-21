@@ -1,7 +1,7 @@
 "use client";
 
 import { Navbar } from "@/components/navbar";
-import { Inputp } from "@/components/ui/apikeyinput";
+
 import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,8 +35,6 @@ function Page() {
   const [files, setFiles] = useState<File[]>([]);
   const [questionHeader, setQuestionHeader] = useState("");
   const [questionDescription, setQuestionDescription] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [modelName, setModelName] = useState("qwen/qwq-32b:free");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
@@ -98,10 +96,6 @@ function Page() {
       setError("Question description is required");
       return;
     }
-    if (!apiKey.trim()) {
-      setError("API key is required");
-      return;
-    }
     if (files.length === 0) {
       setError("Please upload at least one file");
       return;
@@ -117,8 +111,6 @@ function Page() {
       });
       formData.append("questionHeader", questionHeader);
       formData.append("questionDescription", questionDescription);
-      formData.append("apiKey", apiKey);
-      formData.append("modelName", modelName);
 
       const response = await fetch("/api/generate-questions", {
         method: "POST",
@@ -164,7 +156,6 @@ function Page() {
     const params = new URLSearchParams();
     params.set("questionHeader", questionHeader);
     params.set("questionDescription", questionDescription);
-    params.set("modelName", modelName);
 
     const filesToUse = files.length > 0 ? files : uploadedFileNames;
     if (filesToUse.length > 0) {
@@ -179,7 +170,6 @@ function Page() {
     (async () => {
       try {
         const response = await fetch(requestUrl, {
-          headers: { "x-api-key": apiKey },
           signal: abortController.signal,
         });
 
@@ -620,60 +610,11 @@ function Page() {
                   </div>
                 </motion.div>
 
-                {/* AI Configuration */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="card p-6"
-                >
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-8 h-8 rounded-lg bg-[#6C63FF]/10 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-[#6C63FF]" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-[#F5F5F5]">
-                        AI Configuration
-                      </h2>
-                      <p className="text-xs text-[#71717A]">
-                        API credentials and model selection
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="apiKey" className="mb-2 block">
-                        API Key
-                      </Label>
-                      <Inputp
-                        id="apiKey"
-                        type="password"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="Enter your OpenRouter API key"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="modelName" className="mb-2 block">
-                        Model
-                      </Label>
-                      <Inputp
-                        id="modelName"
-                        type="text"
-                        value={modelName}
-                        onChange={(e) => setModelName(e.target.value)}
-                        placeholder="e.g. qwen/qwq-32b:free"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-
                 {/* Submit */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.3 }}
                   className="flex justify-end pt-2"
                 >
                   {!isLoading ? (
