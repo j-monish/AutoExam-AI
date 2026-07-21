@@ -164,7 +164,6 @@ function Page() {
     const params = new URLSearchParams();
     params.set("questionHeader", questionHeader);
     params.set("questionDescription", questionDescription);
-    params.set("apiKey", apiKey);
     params.set("modelName", modelName);
 
     const filesToUse = files.length > 0 ? files : uploadedFileNames;
@@ -173,58 +172,91 @@ function Page() {
     }
 
     const requestUrl = `/api/generate-questions?${params.toString()}`;
-    const eventSource = new EventSource(requestUrl);
-    eventSourceRef.current = eventSource;
 
-    eventSource.onmessage = (event) => {
+    const abortController = new AbortController();
+    eventSourceRef.current = { close: () => abortController.abort() } as EventSource;
+
+    (async () => {
       try {
-        const data = JSON.parse(event.data);
+        const response = await fetch(requestUrl, {
+          headers: { "x-api-key": apiKey },
+          signal: abortController.signal,
+        });
 
-        if (!isFormSubmitted && data.content && data.content.trim() !== "") {
-          setIsAnimating(true);
-          setTimeout(() => {
-            setIsFormSubmitted(true);
-            setIsAnimating(false);
-            setIsLoading(false);
-            setTimeout(() => scrollToBottom(), 100);
-          }, 500);
-        }
-
-        if (data.type === "error") {
-          setError(data.content);
+        if (!response.ok || !response.body) {
+          setError("Error receiving data from the server. Please try again.");
           setIsGenerating(false);
-          setIsLoading(false);
-          cleanupEventSource();
           return;
         }
 
-        setGeneratedContent((prev) => {
-          const newContent = prev + (prev ? "\n\n" : "") + data.content;
-          requestAnimationFrame(() => {
-            if (isGenerating) scrollToBottom();
-          });
-          return newContent;
-        });
-      } catch (e) {
-        console.error("Failed to parse SSE data:", e);
-        setGeneratedContent((prev) => prev + (prev ? "\n\n" : "") + event.data);
+        console.log("EventSource connection established");
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("event: complete")) {
+              setIsGenerating(false);
+              cleanupEventSource();
+              return;
+            }
+            if (!line.startsWith("data: ")) continue;
+            const dataStr = line.slice(6);
+            if (dataStr === "done") continue;
+
+            try {
+              const data = JSON.parse(dataStr);
+
+              if (!isFormSubmitted && data.content && data.content.trim() !== "") {
+                setIsAnimating(true);
+                setTimeout(() => {
+                  setIsFormSubmitted(true);
+                  setIsAnimating(false);
+                  setIsLoading(false);
+                  setTimeout(() => scrollToBottom(), 100);
+                }, 500);
+              }
+
+              if (data.type === "error") {
+                setError(data.content);
+                setIsGenerating(false);
+                setIsLoading(false);
+                cleanupEventSource();
+                return;
+              }
+
+              setGeneratedContent((prev) => {
+                const newContent = prev + (prev ? "\n\n" : "") + data.content;
+                requestAnimationFrame(() => {
+                  if (isGenerating) scrollToBottom();
+                });
+                return newContent;
+              });
+            } catch (e) {
+              console.error("Failed to parse SSE data:", e);
+              setGeneratedContent((prev) => prev + (prev ? "\n\n" : "") + dataStr);
+            }
+          }
+        }
+
+        setIsGenerating(false);
+        cleanupEventSource();
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError("Error receiving data from the server. Please try again.");
+        setIsGenerating(false);
+        cleanupEventSource();
       }
-    };
-
-    eventSource.onopen = () => {
-      console.log("EventSource connection established");
-    };
-
-    eventSource.onerror = () => {
-      setError("Error receiving data from the server. Please try again.");
-      setIsGenerating(false);
-      cleanupEventSource();
-    };
-
-    eventSource.addEventListener("complete", () => {
-      setIsGenerating(false);
-      cleanupEventSource();
-    });
+    })();
   };
 
   const handleGoBack = () => {

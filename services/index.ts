@@ -81,7 +81,7 @@ class OpenRouterLLM extends ChatOpenAI {
       },
     });
 
-    this.siteUrl = options.siteUrl || "http://localhost:3000";
+    this.siteUrl = options.siteUrl || process.env.NEXT_PUBLIC_OPENROUTER_SITE_URL || "https://autoexam.ai";
     this.siteName = options.siteName || "AutoExam AI";
   }
 

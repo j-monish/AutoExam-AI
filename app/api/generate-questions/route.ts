@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const questionHeader = url.searchParams.get("questionHeader");
     const questionDescription = url.searchParams.get("questionDescription");
-    const apiKey = url.searchParams.get("apiKey");
+    const apiKey = req.headers.get("x-api-key");
     const modelName = url.searchParams.get("modelName") || "qwen/qwq-32b:free";
     const uploadedFilesParam = url.searchParams.get("uploadedFiles");
 
