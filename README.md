@@ -2,8 +2,6 @@
 
 AutoExam AI is an AI-powered assessment generation platform that creates professional question papers, answer keys, and AI-assisted student evaluations from uploaded educational material using multiple AI agents.
 
-https://github.com/user-attachments/assets/6ea7c368-2001-4062-a866-95c43651b92a
-
 ## 🚀 Features
 
 - **AI-Powered Question Generation**: Creates high-quality, contextually relevant questions from PDF content using advanced language models
@@ -17,10 +15,6 @@ https://github.com/user-attachments/assets/6ea7c368-2001-4062-a866-95c43651b92a
 - **Cloud File Storage**: Uses Convex for secure file uploads, storage, and management
 
 ## 🧠 How It Works
-
-![total system](https://github.com/user-attachments/assets/a972a4ec-632e-4c6c-a2e4-fdcfd624fd83)
-
-
 
 AutoExam AI employs a sophisticated multi-agent system powered by LangChain and large language models:
 
